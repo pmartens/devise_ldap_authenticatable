@@ -3,7 +3,7 @@ require "net/ldap"
 module Devise
   module LDAP
     DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY = 'uniqueMember'
-    
+
     module Adapter
       def self.valid_credentials?(login, password_plaintext)
         options = {:login => login,
@@ -41,8 +41,8 @@ module Devise
         self.ldap_connect(login).valid_login?
       end
 
-      def self.get_groups(login)
-        self.ldap_connect(login).user_groups
+      def self.get_groups(login, group_attribute = nil)
+        self.ldap_connect(login).user_groups(group_attribute)
       end
 
       def self.in_ldap_group?(login, group_name, group_attribute = nil)

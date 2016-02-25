@@ -166,11 +166,11 @@ module Devise
         return true
       end
 
-      def user_groups
+      def user_groups(group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
         admin_ldap = Connection.admin
 
         DeviseLdapAuthenticatable::Logger.send("Getting groups for #{dn}")
-        filter = Net::LDAP::Filter.eq("uniqueMember", dn)
+        filter = Net::LDAP::Filter.eq(group_attribute, dn)
         admin_ldap.search(:filter => filter, :base => @group_base).collect(&:dn)
       end
 
