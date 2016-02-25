@@ -52,8 +52,8 @@ module Devise
         @ldap_entry ||= Devise::LDAP::Adapter.get_ldap_entry(login_with)
       end
 
-      def ldap_groups
-        Devise::LDAP::Adapter.get_groups(login_with)
+      def ldap_groups, group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
+        Devise::LDAP::Adapter.get_groups(login_with, group_attribute)
       end
 
       def in_ldap_group?(group_name, group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
