@@ -24,7 +24,6 @@ module Devise
 
       def change_password!(current_password)
         raise "Need to set new password first" if @password.blank?
-
         Devise::LDAP::Adapter.update_own_password(login_with, @password, current_password)
       end
       
@@ -39,7 +38,7 @@ module Devise
       def password=(new_password)
         @password = new_password
         if defined?(password_digest) && @password.present? && respond_to?(:encrypted_password=)
-          self.encrypted_password = password_digest(@password) 
+          self.encrypted_password = password_digest(@password)
         end
       end
 
@@ -72,6 +71,10 @@ module Devise
         end
       end
 
+      # def password_digest(password)
+      #   Devise::Encryptor.digest(self.class, password)
+      # end
+
       #
       # callbacks
       #
@@ -84,8 +87,9 @@ module Devise
       def after_ldap_authentication
       end
 
-
       module ClassMethods
+        Devise::Models.config(self, :pepper, :stretches, :send_password_change_notification)
+
         # Find a user for ldap authentication.
         def find_for_ldap_authentication(attributes={})
           auth_key = self.authentication_keys.first
@@ -111,7 +115,7 @@ module Devise
         end
 
         def update_with_password(resource)
-          puts "UPDATE_WITH_PASSWORD: #{resource.inspect}"
+           puts "UPDATE_WITH_PASSWORD: #{resource.inspect}"
         end
 
       end

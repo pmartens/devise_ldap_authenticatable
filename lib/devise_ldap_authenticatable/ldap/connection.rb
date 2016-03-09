@@ -40,6 +40,7 @@ module Devise
       end
 
       def set_param(param, new_value)
+        puts "Update ldap atrribute #{param}"
         update_ldap( { param.to_sym => new_value } )
       end
 
@@ -168,9 +169,21 @@ module Devise
 
       def user_groups(group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
         admin_ldap = Connection.admin
-
         DeviseLdapAuthenticatable::Logger.send("Getting groups for #{dn}")
-        filter = Net::LDAP::Filter.eq(group_attribute, dn)
+        filter = Net::LDAP::Filter.eq(group_attribute, @login)
+        admin_ldap.search(:filter => filter, :base => @group_base).collect(&:dn)
+      end
+
+      def all_groups(group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
+        admin_ldap = Connection.admin
+        DeviseLdapAuthenticatable::Logger.send("Getting all groups")
+        admin_ldap.search(base: @group_base)
+      end
+
+      def groups_for_user(user_value, group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
+        admin_ldap = Connection.admin
+        DeviseLdapAuthenticatable::Logger.send("Getting groups for #{dn}")
+        filter = Net::LDAP::Filter.eq(group_attribute, user_value)
         admin_ldap.search(:filter => filter, :base => @group_base).collect(&:dn)
       end
 

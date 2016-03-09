@@ -15,6 +15,18 @@ module Devise
         resource.authorized?
       end
 
+      def self.update_attributes(login, params, attribute_mappings = nil)
+        options = {:login => login,
+                   :ldap_auth_username_builder => ::Devise.ldap_auth_username_builder,
+                   :admin => ::Devise.ldap_use_admin_to_bind}
+        resource = Devise::LDAP::Connection.new(options)
+        mapper = Devise::LDAP::AttributeMapper.new(params, attribute_mappings)
+        attributes = mapper.get_attributes
+        attributes.each do |key, value|
+          resource.set_param(mapper.get_ldap_attribute(key.to_sym), value) unless key.nil?
+        end
+      end
+
       def self.update_password(login, new_password)
         options = {:login => login,
                    :new_password => new_password,
@@ -33,8 +45,7 @@ module Devise
         options = {:login => login,
                    :ldap_auth_username_builder => ::Devise.ldap_auth_username_builder,
                    :admin => ::Devise.ldap_use_admin_to_bind}
-
-        resource = Devise::LDAP::Connection.new(options)
+        Devise::LDAP::Connection.new(options)
       end
 
       def self.valid_login?(login)
@@ -43,6 +54,14 @@ module Devise
 
       def self.get_groups(login, group_attribute = nil)
         self.ldap_connect(login).user_groups(group_attribute)
+      end
+
+      def self.groups_for_user(login, user_value, group_attribute)
+        self.ldap_connect(login).groups_for_user(user_value, group_attribute)
+      end
+
+      def self.get_all_groups(login, group_attribute = nil)
+        self.ldap_connect(login).all_groups(group_attribute)
       end
 
       def self.in_ldap_group?(login, group_name, group_attribute = nil)
