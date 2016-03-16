@@ -8,13 +8,13 @@ module Devise
                           lastname: 'sn',
       }
 
-      def initialize(params, mapping = DEFAULT_MAPPING)
-        @attributes = params
+      def initialize(user, mapping = DEFAULT_MAPPING)
+        @user = user
         @mapping = mapping
       end
 
       def get_attributes
-        @attributes.reject{ |p| !@mapping.include? p.to_sym }
+        @user.attributes.reject{ |p| !@mapping.include? p.to_sym }
       end
 
       def get_ldap_attribute(key)

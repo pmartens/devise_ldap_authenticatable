@@ -101,7 +101,7 @@ module Devise
       end
 
       def change_password!
-        update_ldap(:userpassword => Net::LDAP::Password.generate(:sha, @new_password))
+        update_ldap(:userpassword => Net::LDAP::Password.generate(:ssha, @new_password))
       end
 
       def in_required_groups?
@@ -185,6 +185,19 @@ module Devise
         DeviseLdapAuthenticatable::Logger.send("Getting groups for #{dn}")
         filter = Net::LDAP::Filter.eq(group_attribute, user_value)
         admin_ldap.search(:filter => filter, :base => @group_base).collect(&:dn)
+      end
+
+      def users
+        admin_ldap = Connection.admin
+        DeviseLdapAuthenticatable::Logger.send("Getting all users")
+        admin_ldap.search()
+      end
+
+      def user(user_value, find_attribute = LDAP::DEFAULT_USER_UNIQUE_LIST_KEY)
+        admin_ldap = Connection.admin
+        DeviseLdapAuthenticatable::Logger.send("Getting user info")
+        filter = Net::LDAP::Filter.eq(find_attribute, user_value)
+        admin_ldap.search(:filter => filter, :base => dn)
       end
 
       def valid_login?
