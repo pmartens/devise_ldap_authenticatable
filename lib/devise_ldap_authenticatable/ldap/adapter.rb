@@ -42,6 +42,15 @@ module Devise
         set_ldap_param(login, :userPassword, ::Devise.ldap_auth_password_builder.call(new_password), current_password)
       end
 
+      def self.upload_photo(login, photo_attribute, file)
+        return unless File.exist? file
+        options = {:login => login,
+                   :ldap_auth_username_builder => ::Devise.ldap_auth_username_builder,
+                   :admin => ::Devise.ldap_use_admin_to_bind}
+        resource = Devise::LDAP::Connection.new(options)
+        resource.set_param(photo_attribute, IO.binread(file))
+      end
+
       def self.ldap_connect(login)
         options = {:login => login,
                    :ldap_auth_username_builder => ::Devise.ldap_auth_username_builder,
