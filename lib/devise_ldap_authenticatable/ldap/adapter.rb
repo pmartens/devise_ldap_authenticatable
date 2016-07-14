@@ -3,6 +3,7 @@ require "net/ldap"
 module Devise
   module LDAP
     DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY = 'uniqueMember'
+    DEFAULT_MAIL_GROUP_UNIQUE_MEMBER_LIST_KEY = 'mailLocalAddress'
     DEFAULT_USER_UNIQUE_LIST_KEY = 'uid'
 
     module Adapter
@@ -36,6 +37,10 @@ module Devise
 
         resource = Devise::LDAP::Connection.new(options)
         resource.change_password! if new_password.present?
+      end
+
+      def self.update_mailbox_password(login, email, new_password, mailbox_attribute = nil)
+        self.ldap_connect(login).update_personal_mailbox_password(email, new_password, mailbox_attribute)
       end
 
       def self.update_own_password(login, new_password, current_password)
@@ -72,6 +77,10 @@ module Devise
 
       def self.get_all_groups(login, group_attribute = nil)
         self.ldap_connect(login).all_groups(group_attribute)
+      end
+
+      def self.get_personal_mailbox(login, email, mailbox_attribute = nil )
+        self.ldap_connect(login).personal_mailbox(email, mailbox_attribute)
       end
 
       def self.get_user(login, user_value, find_attribute = nil)

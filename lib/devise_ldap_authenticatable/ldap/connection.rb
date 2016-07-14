@@ -23,6 +23,7 @@ module Devise
         @ldap_auth_username_builder = params[:ldap_auth_username_builder]
 
         @group_base = ldap_config["group_base"]
+        @mailbox_base = ldap_config["mailbox_base"]
         @check_group_membership = ldap_config.has_key?("check_group_membership") ? ldap_config["check_group_membership"] : ::Devise.ldap_check_group_membership
         @required_groups = ldap_config["required_groups"]
         @required_attributes = ldap_config["require_attribute"]
@@ -170,7 +171,8 @@ module Devise
       def user_groups(group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
         admin_ldap = Connection.admin
         DeviseLdapAuthenticatable::Logger.send("Getting groups for #{dn}")
-        filter = Net::LDAP::Filter.eq(group_attribute, @login)
+        dn_hash = Hash[dn.split(',').collect { |x| x.split('=') }]
+        filter = Net::LDAP::Filter.eq(group_attribute, dn_hash['uid'])
         admin_ldap.search(:filter => filter, :base => @group_base).collect(&:dn)
       end
 
@@ -178,6 +180,23 @@ module Devise
         admin_ldap = Connection.admin
         DeviseLdapAuthenticatable::Logger.send("Getting all groups")
         admin_ldap.search(base: @group_base)
+      end
+
+      def personal_mailbox(email, mailbox_attribute = LDAP::DEFAULT_MAIL_GROUP_UNIQUE_MEMBER_LIST_KEY)
+        admin_ldap = Connection.admin
+        DeviseLdapAuthenticatable::Logger.send("Getting personal mailbox for #{dn}")
+        filter = Net::LDAP::Filter.eq(mailbox_attribute, email)
+        admin_ldap.search(:filter => filter, :base => @mailbox_base)
+      end
+
+      def update_personal_mailbox_password(email, new_password, mailbox_attribute)
+        admin_ldap = Connection.admin
+        filter = Net::LDAP::Filter.eq(mailbox_attribute, email)
+        resource = admin_ldap.search(:filter => filter, :base => @mailbox_base).collect(&:dn)
+        if resource.present?
+          DeviseLdapAuthenticatable::Logger.send("Modifying Mailbox password for #{resource.first}")
+          admin_ldap.replace_attribute resource.first, :userpassword, new_password
+        end
       end
 
       def groups_for_user(user_value, group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
