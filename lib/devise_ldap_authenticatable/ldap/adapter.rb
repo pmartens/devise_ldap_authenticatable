@@ -122,6 +122,11 @@ module Devise
         resource.ldap_param_value(param)
       end
 
+      def self.get_ldap_extended_property(login,attribute)
+        resource = self.ldap_connect(login)
+        resource.get_extended_propertie attribute
+      end
+
       def self.get_ldap_entry(login)
         self.ldap_connect(login).search_for_login
       end

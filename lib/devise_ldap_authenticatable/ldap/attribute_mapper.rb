@@ -14,7 +14,7 @@ module Devise
       end
 
       def get_attributes
-        @user.attributes.reject{ |p| !@mapping.include? p.to_sym }
+        @user.attributes.reject{ |p| !(@mapping.include?(p.to_sym) && @user.changed.include?(p) )  }
       end
 
       def get_ldap_attribute(key)

@@ -75,6 +75,25 @@ module Devise
         end
       end
 
+      def get_extended_propertie(attribute)
+        ldap_entry = search_for_login('+')
+
+        if ldap_entry
+          unless ldap_entry[attribute].empty?
+            value = ldap_entry.send(attribute)
+            DeviseLdapAuthenticatable::Logger.send("Requested extend propertie #{attribute} has value #{value}")
+            value
+          else
+            DeviseLdapAuthenticatable::Logger.send("Requested extend propertie #{attribute} does not exist")
+            value = nil
+          end
+        else
+          DeviseLdapAuthenticatable::Logger.send("Requested ldap entry does not exist")
+          value = nil
+        end
+      end
+
+
       def authenticate!
         return false unless (@password.present? || @allow_unauthenticated_bind)
         @ldap.auth(dn, @password)
@@ -89,15 +108,15 @@ module Devise
         DeviseLdapAuthenticatable::Logger.send("Authorizing user #{dn}")
         if !authenticated?
           DeviseLdapAuthenticatable::Logger.send("Not authorized because not authenticated.")
-          return false
+          false
         elsif !in_required_groups?
           DeviseLdapAuthenticatable::Logger.send("Not authorized because not in required groups.")
-          return false
+          false
         elsif !has_required_attribute?
           DeviseLdapAuthenticatable::Logger.send("Not authorized because does not have required attribute.")
-          return false
+          false
         else
-          return true
+          true
         end
       end
 
@@ -118,7 +137,7 @@ module Devise
             return false unless in_group?(group)
           end
         end
-        return true
+        true
       end
 
       def in_group?(group_name, group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
@@ -148,7 +167,7 @@ module Devise
           DeviseLdapAuthenticatable::Logger.send("User #{dn} is not in group: #{group_name}")
         end
 
-        return in_group
+        in_group
       end
 
       def has_required_attribute?
@@ -164,8 +183,7 @@ module Devise
             return false
           end
         end
-
-        return true
+        true
       end
 
       def user_groups(group_attribute = LDAP::DEFAULT_GROUP_UNIQUE_MEMBER_LIST_KEY)
@@ -226,13 +244,17 @@ module Devise
       # Searches the LDAP for the login
       #
       # @return [Object] the LDAP entry found; nil if not found
-      def search_for_login
+      def search_for_login(attribute='')
         @login_ldap_entry ||= begin
           DeviseLdapAuthenticatable::Logger.send("LDAP search for login: #{@attribute}=#{@login}")
           filter = Net::LDAP::Filter.eq(@attribute.to_s, @login.to_s)
           ldap_entry = nil
           match_count = 0
-          @ldap.search(:filter => filter) {|entry| ldap_entry = entry; match_count+=1}
+          if attribute.empty?
+            @ldap.search(:filter => filter ) {|entry| ldap_entry = entry; match_count+=1}
+          else
+            @ldap.search(:filter => filter, :attributes => attribute ) {|entry| ldap_entry = entry; match_count+=1}
+          end
           DeviseLdapAuthenticatable::Logger.send("LDAP search yielded #{match_count} matches")
           ldap_entry
         end
